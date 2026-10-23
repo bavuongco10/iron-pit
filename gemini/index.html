@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Arena 3D - 1st Person Shooter</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="game-container"></div>
+
+  <!-- Damage Screen Flash & Low HP Vignette -->
+  <div id="damage-overlay"></div>
+  <div id="low-hp-warning"></div>
+
+  <!-- Main Game HUD Overlay -->
+  <div id="hud-overlay">
+    <!-- Top Bar -->
+    <header class="hud-top">
+      <!-- Player Health & Shield -->
+      <div class="hud-panel player-status">
+        <div class="status-row">
+          <span class="status-label">HP</span>
+          <div class="bar-container hp-bar-bg">
+            <div id="hud-hp-bar" class="bar-fill hp-fill" style="width: 100%"></div>
+          </div>
+          <span id="hud-hp-text" class="status-num">100 / 100</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">SHIELD</span>
+          <div class="bar-container shield-bar-bg">
+            <div id="hud-shield-bar" class="bar-fill shield-fill" style="width: 100%"></div>
+          </div>
+          <span id="hud-shield-text" class="status-num">50 / 50</span>
+        </div>
+      </div>
+
+      <!-- Enemy Boss Health Bar -->
+      <div class="hud-panel enemy-boss-status">
+        <div class="enemy-header">
+          <span class="enemy-title">TARGET: CYBER-OPPONENT</span>
+          <span id="enemy-difficulty-badge" class="badge">LVL 2 - SOLDIER</span>
+        </div>
+        <div class="bar-container enemy-bar-bg">
+          <div id="enemy-hp-bar" class="bar-fill enemy-fill" style="width: 100%"></div>
+        </div>
+        <div class="enemy-footer">
+          <span id="enemy-hp-text" class="status-num">150 / 150 HP</span>
+          <span id="hud-timer-text" class="timer-text">00:00</span>
+        </div>
+      </div>
+
+      <!-- Mini-Radar Scanner & Controls -->
+      <div class="hud-panel radar-panel">
+        <div class="radar-box">
+          <canvas id="radar-canvas" width="130" height="130"></canvas>
+          <div class="radar-info">
+            <span class="radar-tag">RADAR</span>
+            <span id="radar-dist-text" class="radar-dist">--m</span>
+          </div>
+        </div>
+        <div class="top-quick-actions">
+          <button id="btn-audio-toggle" class="hud-btn" title="Toggle Sound">🔊</button>
+          <button id="btn-pause-menu" class="hud-btn" title="Pause / Difficulty">⚙️</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Center Screen: Crosshair & Hitmarker -->
+    <div id="crosshair-container">
+      <div id="hud-crosshair">
+        <div class="ch-line ch-top"></div>
+        <div class="ch-line ch-bottom"></div>
+        <div class="ch-line ch-left"></div>
+        <div class="ch-line ch-right"></div>
+        <div class="ch-dot"></div>
+      </div>
+      <div id="hud-hitmarker">
+        <div class="hm-tick hm-tl"></div>
+        <div class="hm-tick hm-tr"></div>
+        <div class="hm-tick hm-bl"></div>
+        <div class="hm-tick hm-br"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar: Controls Guide & Weapon Ammo -->
+    <footer class="hud-bottom">
+      <!-- Controls hints -->
+      <div class="hud-panel controls-guide">
+        <div class="guide-item">
+          <span class="key-badge">⬆️ / ⬇️</span>
+          <span class="key-label">Move Forward / Back</span>
+        </div>
+        <div class="guide-item">
+          <span class="key-badge">⬅️ / ➡️</span>
+          <span class="key-label">Turn Left / Right</span>
+        </div>
+        <div class="guide-item">
+          <span class="key-badge">SPACE</span>
+          <span class="key-label">Shoot Laser</span>
+        </div>
+        <div class="guide-item">
+          <span class="key-badge">R</span>
+          <span class="key-label">Reload</span>
+        </div>
+        <div class="guide-item mouse-opt">
+          <span class="key-badge">MOUSE</span>
+          <span class="key-label">Optional Aim / Click</span>
+        </div>
+      </div>
+
+      <!-- Weapon & Ammo Display -->
+      <div class="hud-panel weapon-ammo-display">
+        <div class="weapon-info">
+          <span class="weapon-name">PLASMA RIFLE MK-I</span>
+          <span id="current-difficulty-tag" class="diff-tag">SOLDIER</span>
+        </div>
+        <div class="ammo-counter">
+          <span id="hud-ammo-text" class="ammo-num">30 / 30</span>
+        </div>
+        <div id="hud-reload-container" class="reload-wrapper" style="display: none;">
+          <div class="reload-bg">
+            <div id="hud-reload-bar" class="reload-fill" style="width: 0%"></div>
+          </div>
+          <span class="reload-label">RELOADING</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Start & Difficulty Selection Modal -->
+  <div id="menu-modal" class="modal-backdrop visible">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h1 class="game-logo">CYBER ARENA <span class="logo-accent">3D</span></h1>
+        <p class="game-tagline">1st-Person Combat Simulation in Cyber Arena against Advanced AI</p>
+      </div>
+
+      <!-- Difficulty Selection Section -->
+      <div class="modal-section">
+        <h2 class="section-title">CHOOSE DIFFICULTY LEVEL</h2>
+        <p class="section-subtitle">Configures opponent health, reaction time, speed, accuracy, and tactical combat behavior</p>
+        <div id="difficulty-options-list" class="diff-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Controls summary -->
+      <div class="modal-controls-summary">
+        <div class="ctrl-box">
+          <span class="ctrl-keys">⬆️ ⬇️ / W S</span>
+          <span class="ctrl-action">Move Forward & Back</span>
+        </div>
+        <div class="ctrl-box">
+          <span class="ctrl-keys">⬅️ ➡️</span>
+          <span class="ctrl-action">Turn Left & Right</span>
+        </div>
+        <div class="ctrl-box">
+          <span class="ctrl-keys">SPACEBAR</span>
+          <span class="ctrl-action">Fire Primary Laser</span>
+        </div>
+        <div class="ctrl-box">
+          <span class="ctrl-keys">R KEY</span>
+          <span class="ctrl-action">Manual Reload</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="modal-actions">
+        <button id="btn-start-game" class="action-btn primary-btn">DEPLOY INTO ARENA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-Game Pause & Difficulty Switcher Modal -->
+  <div id="pause-modal" class="modal-backdrop">
+    <div class="modal-card pause-card">
+      <h2 class="modal-title">TACTICAL PAUSE</h2>
+      <p class="section-subtitle">Switch combat difficulty or recalibrate encounter</p>
+      
+      <div class="pause-diff-section">
+        <div id="pause-difficulty-list" class="diff-grid compact">
+          <!-- Populated via clone/JS -->
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-resume-game" class="action-btn primary-btn">RESUME COMBAT</button>
+        <button id="btn-restart-game" class="action-btn secondary-btn">RESTART MATCH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory / Defeat Modal -->
+  <div id="game-over-modal" class="modal-backdrop">
+    <div class="modal-card game-over-card">
+      <h2 id="modal-title" class="modal-title victory">VICTORY ACHIEVED</h2>
+      <p id="modal-subtitle" class="section-subtitle">Opponent neutralized successfully.</p>
+      
+      <div id="modal-stats" class="modal-stats-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-play-again" class="action-btn primary-btn">PLAY AGAIN</button>
+        <button id="btn-change-difficulty" class="action-btn secondary-btn">CHANGE DIFFICULTY</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

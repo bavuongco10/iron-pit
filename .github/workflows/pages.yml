@@ -1,0 +1,48 @@
+name: Deploy versions to Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Every top-level folder is one version: built with npm if it has a package.json, otherwise served as-is.
+      - name: Build site
+        run: |
+          mkdir -p _site
+          links=""
+          for d in */; do
+            d=${d%/}
+            [ "$d" = _site ] && continue
+            if [ -f "$d/package.json" ]; then
+              (cd "$d" && npm ci && npm run build -- --base=./)
+              cp -r "$d/dist" "_site/$d"
+            else
+              cp -r "$d" "_site/$d"
+            fi
+            links="$links<li><a href=\"./$d/\">$d</a></li>"
+          done
+          cat > _site/index.html <<HTML
+          <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>Iron Pit Versions</title>
+          <style>body{background:#0b1114;color:#a9bcc2;font:16px system-ui,sans-serif;max-width:40rem;margin:4rem auto;padding:0 16px}a{color:#ffb02e;font-size:1.25rem}li{margin:.5rem 0}</style>
+          <h1>Iron Pit</h1><p>Pick a version:</p><ul>$links</ul>
+          HTML
+      - uses: actions/upload-pages-artifact@v3
+      - id: deployment
+        uses: actions/deploy-pages@v4
