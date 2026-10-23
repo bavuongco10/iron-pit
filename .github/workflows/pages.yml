@@ -37,6 +37,7 @@ jobs:
             fi
             links="$links<li><a href=\"./$d/\">$d</a></li>"
           done
+          links="$links<li><a href=\"https://muse.ai/s/3d-fps-arena-shooter-xoxg6xbxf69xbfaxi/ttNxyhw_EwylLNpv4lr2VIIWx6ZLfQAUKVAdA1QzfIA\">muse</a></li>"
           cat > _site/index.html <<HTML
           <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
           <title>Iron Pit Versions</title>
